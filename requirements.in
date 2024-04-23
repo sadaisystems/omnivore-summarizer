@@ -2,3 +2,4 @@ requests
 python-dotenv
 wheel
 setuptools
+omnivoreql
