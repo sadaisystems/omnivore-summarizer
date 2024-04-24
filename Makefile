@@ -4,6 +4,9 @@ VENV_DIR=osum_venv
 run:
 	$(VENV_DIR)/bin/python main.py
 
+init: venv uv_sync
+	mkdir -p logs
+
 venv:
 	if [ ! -d "$(VENV_DIR)" ]; then \
 	    echo "Creating virtual environment..."; \
@@ -12,13 +15,10 @@ venv:
 
 	source $(VENV_DIR)/bin/activate
 
-init: venv uv_sync
-	mkdir -p logs
-
 uv_compile:
 	uv pip compile requirements.in -o requirements.txt
 
 uv_sync:
 	uv pip sync requirements.txt
 
-.PHONY: run venv uv_compile uv_sync
+.PHONY: run init venv uv_compile uv_sync
