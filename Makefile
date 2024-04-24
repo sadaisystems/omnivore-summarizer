@@ -12,6 +12,9 @@ venv:
 
 	source $(VENV_DIR)/bin/activate
 
+init: venv uv_sync
+	mkdir -p logs
+
 uv_compile:
 	uv pip compile requirements.in -o requirements.txt
 
