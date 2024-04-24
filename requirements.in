@@ -3,3 +3,5 @@ python-dotenv
 wheel
 setuptools
 omnivoreql
+openai
+tiktoken
