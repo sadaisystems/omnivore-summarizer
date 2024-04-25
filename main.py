@@ -1,5 +1,4 @@
 import os
-import time
 import tiktoken
 import re
 import logging
@@ -8,8 +7,11 @@ from gql import gql
 from datetime import datetime, timedelta
 from omnivoreql import OmnivoreQL
 from dotenv import load_dotenv
-from openai import OpenAI
 from colorama import Fore, Style
+
+from langchain_community.chat_models import ChatOllama
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
 
 load_dotenv()
 
@@ -50,54 +52,52 @@ Make sure you follow 80/20 rule: provide 80% of essential value using 20% or les
 """
 
 
-class LLM:
-    def __init__(self, api_key: str):
-        if api_key not in ["ollama", "lm-studio"]:
-            raise ValueError("Invalid API key: must be 'ollama' or 'lm-studio'")
+def initialize_llm(provider: str = "ollama", temperature: float = 0.0):
+    if provider == "ollama":
+        model_id = os.getenv("OLLAMA_MODEL_ID")
+        base_url = os.getenv("OLLAMA_BASE_URL")
+        llm = ChatOllama(model=model_id, temperature=temperature, base_url=base_url)
+    elif provider == "lm-studio":
+        raise NotImplementedError("lm-studio is not implemented yet")
+    else:
+        raise ValueError("Invalid provider: must be 'ollama' or 'lm-studio'")
 
-        port = 1234 if api_key == "lm-studio" else 11434  # ollama or LM Studio
-        base_url = f"http://localhost:{port}/v1"
+    return llm
 
-        self.client = OpenAI(base_url=base_url, api_key=api_key)
-        self.model_id = (
-            os.getenv("LM_STUDIO_MODEL_ID")
-            if api_key == "lm-studio"
-            else os.getenv("OLLAMA_MODEL_ID")
-        )
-        
+
+class Summarizer:
+    def __init__(self, provider: str = "ollama", temperature: float = 0.0) -> None:
+        self.llm = initialize_llm(provider, temperature=temperature)
         self.tokenizer = tiktoken.get_encoding("cl100k_base")  # ~Llama tokenizer
 
-    def get_completion(self, content: str, temperature: float = 0.0):
-        time_start = time.time()
-        
+        self.prompt_template = ChatPromptTemplate.from_messages(
+            [("human", summarization_prompt)]
+        )
+
+    def get_summary(self, content: str):
         print(f"Tokens: approx. {len(self.tokenizer.encode(content))}")
 
         # Get the summary from LLM
-        messages = [
-            {"role": "user", "content": summarization_prompt.format(content=content)},
-        ]
-        completion = self.client.chat.completions.create(
-            model=self.model_id,
-            messages=messages,
-            temperature=temperature,
-        )
 
-        time_end = time.time()
-        time_taken = time_end - time_start
+        prompt = self.prompt_template.invoke({"content": content})
+        response = self.llm.invoke(prompt)
 
-        # Parse completion
-        response = completion.choices[0].message.content
-        token_usage = completion.usage
+        # Parse Ollama completion
+        summary = response.content
 
-        # Pack stats
+        total_duration = response.response_metadata["total_duration"]
+        completion_tokens = response.response_metadata["eval_count"]
+        prompt_tokens = response.response_metadata["prompt_eval_count"]
+        total_tokens = prompt_tokens + completion_tokens
+
         stats = {
-            "time_taken": time_taken,
-            "total_tokens": token_usage.total_tokens,
-            "completion_tokens": token_usage.completion_tokens,
-            "prompt_tokens": token_usage.prompt_tokens,
+            "time_taken": total_duration * 1e-9,  # nanoseconds to seconds
+            "total_tokens": total_tokens,
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
         }
 
-        return response, stats
+        return summary, stats
 
 
 # Omnivore
@@ -106,7 +106,7 @@ class OmnivoreClient:
         self.client = OmnivoreQL(os.getenv("OMNIVORE_API_KEY"))
         self.username = self.get_username()
         self.summ_label_id = self.get_summarized_label_id()
-        
+
         print("Profile:", self.username)
         print("'summarized' label ID:", self.summ_label_id)
 
@@ -193,8 +193,9 @@ class OmnivoreClient:
 
 def main():
     # Initialize LLM
-    api_key = "ollama"  # "ollama" or "lm-studio"
-    llm = LLM(api_key)
+    provider = "ollama"  # "ollama" or "lm-studio"
+    summarizer = Summarizer(provider)
+
     # Initialize Omnivore
     omnivore = OmnivoreClient()
 
@@ -212,7 +213,7 @@ def main():
     aid, label_ids, content, omnivore_link = omnivore.parse_article(article)
 
     # Get the summary from LLM
-    response, stats = llm.get_completion(content, temperature=0.0)
+    response, stats = summarizer.get_summary(content)
 
     print("Summary:\n")
     print(Fore.MAGENTA + response)
