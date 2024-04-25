@@ -1,5 +1,9 @@
 # Omnivore summarizer
 
+LLM-powered summarizer for Omnivore App articles using Ollama and LangChain.
+
+For now works for subscriptions only.
+
 ## Installation
 
 *(Optional)* Install [uv package manager](https://github.com/astral-sh/uv)
@@ -42,3 +46,4 @@ make run # or python main.py
 - Omnivore App [(link)](https://omnivore.app/)
 - omnivoreQL - graphQL API for Omnivore APP [(link)](https://github.com/yazdipour/OmnivoreQL)
 - Ollama [(link)](https://ollama.com/)
+- LangChain [(link)](https://langchain.com/)
