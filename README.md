@@ -16,7 +16,10 @@ make init # or copy the pip commands from the Makefile if no uv
    - `OMNIVORE_API_KEY` - your Omnivore API key
    - `LM_STUDIO_MODEL_ID` - your LM Studio model ID used for the server
 2. Create `summarize` label in your Omnivore APP (will be automated in the future)
-3. Initialize LM Studio server
+3. Download LLama3 model:
+   - [Ollama](https://ollama.com/library/llama3)
+   - [LM Studio](https://huggingface.co/lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF)
+4. Initialize LM Studio. Server/Ollama
 
 ## Usage
 
