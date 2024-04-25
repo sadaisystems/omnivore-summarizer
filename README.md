@@ -32,4 +32,5 @@ make run # or python main.py
 - Omnivore ReaderAPP
 - omnivoreQL - graphQL API for Omnivore APP [(link)](https://github.com/yazdipour/OmnivoreQL)
 - LM Studio [(link)](https://lmstudio.ai/)
+- Ollama [(link)](https://ollama.com/)
 - OpenAI client to communicate with LM Studio API server
