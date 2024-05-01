@@ -35,14 +35,15 @@ I will provide you with an article.
 
 <task>
 - Summarize the article into bullet points. 
-- Start with one sentence describing the article, then provide bullet points.
+- Start with one sentence describing the article from high-level, then provide bullet points.
 - Highlight the most important points using markdown bold.
 - Use markdown syntax.
 - Think step by step.
 </task>
 
 <constraints>
-Make sure you follow 80/20 rule: provide 80% of essential value using 20% or less volume of text.
+- Make sure you follow 80/20 rule: provide 80% of essential value using 20% or less volume of text.
+- Be as consise and comprehensive as possible.
 </constraints>
 
 <article>
@@ -51,22 +52,17 @@ Make sure you follow 80/20 rule: provide 80% of essential value using 20% or les
 """
 
 
-def initialize_llm(provider: str = "ollama", temperature: float = 0.0):
-    if provider == "ollama":
-        model_id = os.getenv("OLLAMA_MODEL_ID")
-        base_url = os.getenv("OLLAMA_BASE_URL")
-        llm = ChatOllama(model=model_id, temperature=temperature, base_url=base_url)
-    elif provider == "lm-studio":
-        raise NotImplementedError("lm-studio is not implemented yet")
-    else:
-        raise ValueError("Invalid provider: must be 'ollama' or 'lm-studio'")
+def initialize_llm(temperature: float = 0.0):
+    model_id = os.getenv("OLLAMA_MODEL_ID")
+    base_url = os.getenv("OLLAMA_BASE_URL")
+    llm = ChatOllama(model=model_id, temperature=temperature, base_url=base_url)
 
     return llm
 
 
 class Summarizer:
-    def __init__(self, provider: str = "ollama", temperature: float = 0.0) -> None:
-        self.llm = initialize_llm(provider, temperature=temperature)
+    def __init__(self,temperature: float = 0.0) -> None:
+        self.llm = initialize_llm(temperature=temperature)
         self.tokenizer = tiktoken.get_encoding("cl100k_base")  # ~Llama tokenizer
 
         self.prompt_template = ChatPromptTemplate.from_messages(
@@ -238,7 +234,7 @@ class OmnivoreClient:
 
 def main():
     # Initialize LLM
-    summarizer = Summarizer("ollama") # or "lm-studio" later
+    summarizer = Summarizer()
 
     # Initialize Omnivore
     omnivore = OmnivoreClient()
